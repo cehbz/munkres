@@ -27,31 +27,30 @@ import (
 )
 
 /*
- * An implementation of the Hungarian algorithm for solving the assignment
- * problem. An instance of the assignment problem consists of a number of
- * workers along with a number of jobs and a cost matrix which gives the cost of
- * assigning the i'th worker to the j'th job at position (i, j). The goal is to
- * find an assignment of workers to jobs so that no job is assigned more than
- * one worker and so that no worker is assigned to more than one job in such a
- * manner so as to minimize the total cost of completing the jobs.
-  *
- * An assignment for a cost matrix that has more workers than jobs will
- * necessarily include unassigned workers, indicated by an assignment value of
- * -1; in no other circumstance will there be unassigned workers. Similarly, an
- * assignment for a cost matrix that has more jobs than workers will necessarily
- * include unassigned jobs; in no other circumstance will there be unassigned
- * jobs. For completeness, an assignment for a square cost matrix will give
- * exactly one unique worker to each job.
- *
- * This version of the Hungarian algorithm runs in time O(n^3), where n is the
- * maximum among the number of workers and the number of jobs.
- *
- * ported from the Java version by Kevin L. Stern
- * https://github.com/KevinStern/software-and-algorithms/
+An implementation of the Hungarian algorithm for solving the assignment
+problem. An instance of the assignment problem consists of a number of
+workers along with a number of jobs and a cost matrix which gives the cost of
+assigning the i'th worker to the j'th job at position (i, j). The goal is to
+find an assignment of workers to jobs so that no job is assigned more than
+one worker and so that no worker is assigned to more than one job in such a
+manner so as to minimize the total cost of completing the jobs.
+
+An assignment for a cost matrix that has more workers than jobs will
+necessarily include unassigned workers, indicated by an assignment value of
+-1; in no other circumstance will there be unassigned workers. Similarly, an
+assignment for a cost matrix that has more jobs than workers will necessarily
+include unassigned jobs; in no other circumstance will there be unassigned
+jobs. For completeness, an assignment for a square cost matrix will give
+exactly one unique worker to each job.
+
+This version of the Hungarian algorithm runs in time O(n^3), where n is the
+maximum among the number of workers and the number of jobs.
+
+ported from the Java version by Kevin L. Stern
+https://github.com/KevinStern/software-and-algorithms/
 */
-var ErrorIrregularCostMatrix = errors.New("Irregular cost matrix")
-var ErrorInfiniteCost = errors.New("Infinite cost")
-var ErrorNaNCost = errors.New("NaN cost")
+
+var ErrorIrregularCostMatrix, ErrorInfiniteCost, ErrorNaNCost error
 
 type HungarianAlgorithm struct {
 	costMatrix                         [][]float64
@@ -66,11 +65,10 @@ type HungarianAlgorithm struct {
 
 // Construct an instance of the algorithm.
 //
-// @param costMatrix
-//          the cost matrix, where matrix[i][j] holds the cost of assigning
-//          worker i to job j, for all i, j. The cost matrix must not be
-//          irregular in the sense that all rows must be the same length; in
-//          addition, all entries must be non-infinite numbers.
+// costMatrix is the cost matrix, where matrix[i][j] holds the cost of
+// assigning worker i to job j, for all i, j. The cost matrix must not
+// be irregular in the sense that all rows must be the same length; in
+// addition, all entries must be non-infinite numbers.
 func NewHungarianAlgorithm(costMatrix [][]float64) (HungarianAlgorithm, error) {
 	dim := len(costMatrix)
 	if dim == 0 {
@@ -136,13 +134,14 @@ func (h *HungarianAlgorithm) computeInitialFeasibleSolution() {
 
 // Execute the algorithm.
 //
-// @return the minimum cost matching of workers to jobs based upon the
-//         provided cost matrix. A matching value of -1 indicates that the
-//         corresponding worker is unassigned.
+// return the minimum cost matching of workers to jobs based upon the
+// provided cost matrix. A matching value of -1 indicates that the
+// corresponding worker is unassigned.
 func (h *HungarianAlgorithm) Execute() []int {
-	// Heuristics to improve performance: Reduce rows and columns by their
-	// smallest element, compute an initial non-zero dual feasible solution and
-	// create a greedy matching from workers to jobs of the cost matrix.
+	// Heuristics to improve performance: Reduce rows and columns
+	// by their smallest element, compute an initial non-zero dual
+	// feasible solution and create a greedy matching from workers
+	// to jobs of the cost matrix.
 	h.reduce()
 	h.computeInitialFeasibleSolution()
 	h.greedyMatch()
@@ -160,22 +159,24 @@ func (h *HungarianAlgorithm) Execute() []int {
 	return result
 }
 
-// Execute a single phase of the algorithm. A phase of the Hungarian algorithm
-// consists of building a set of committed workers and a set of committed jobs
-// from a root unmatched worker by following alternating unmatched/matched
-// zero-slack edges. If an unmatched job is encountered, then an augmenting
-// path has been found and the matching is grown. If the connected zero-slack
-// edges have been exhausted, the labels of committed workers are increased by
-// the minimum slack among committed workers and non-committed jobs to create
-// more zero-slack edges (the labels of committed jobs are simultaneously
-// decreased by the same amount in order to maintain a feasible labeling).
-// <p>
+// Execute a single phase of the algorithm. A phase of the Hungarian
+// algorithm consists of building a set of committed workers and a set
+// of committed jobs from a root unmatched worker by following
+// alternating unmatched/matched zero-slack edges. If an unmatched job
+// is encountered, then an augmenting path has been found and the
+// matching is grown. If the connected zero-slack edges have been
+// exhausted, the labels of committed workers are increased by the
+// minimum slack among committed workers and non-committed jobs to
+// create more zero-slack edges (the labels of committed jobs are
+// simultaneously decreased by the same amount in order to maintain a
+// feasible labeling).
 //
-// The runtime of a single phase of the algorithm is O(n^2), where n is the
-// dimension of the internal square cost matrix, since each edge is visited at
-// most once and since increasing the labeling is accomplished in time O(n) by
-// maintaining the minimum slack values among non-committed jobs. When a phase
-// completes, the matching will have increased in size.
+// The runtime of a single phase of the algorithm is O(n^2), where n
+// is the dimension of the internal square cost matrix, since each
+// edge is visited at most once and since increasing the labeling is
+// accomplished in time O(n) by maintaining the minimum slack values
+// among non-committed jobs. When a phase completes, the matching will
+// have increased in size.
 func (h *HungarianAlgorithm) executePhase() {
 	for {
 		minSlackWorker := -1
@@ -209,8 +210,8 @@ func (h *HungarianAlgorithm) executePhase() {
 			}
 			return
 		} else {
-			// Update slack values since we increased the size of the committed
-			// workers set.
+			// Update slack values since we increased the
+			// size of the committed workers set.
 			worker := h.matchWorkerByJob[minSlackJob]
 			h.committedWorkers[worker] = true
 			for j := 0; j < h.dim; j++ {
@@ -228,7 +229,7 @@ func (h *HungarianAlgorithm) executePhase() {
 	}
 }
 
-// @return the first unmatched worker or {@link #dim} if none.
+// return the first unmatched worker or dim if none.
 func (h *HungarianAlgorithm) fetchUnmatchedWorker() int {
 	for w, v := range h.matchJobByWorker {
 		if v == -1 {
@@ -238,8 +239,9 @@ func (h *HungarianAlgorithm) fetchUnmatchedWorker() int {
 	return h.dim
 }
 
-// Find a valid matching by greedily selecting among zero-cost matchings. This
-// is a heuristic to jump-start the augmentation algorithm.
+// Find a valid matching by greedily selecting among zero-cost
+// matchings. This is a heuristic to jump-start the augmentation
+// algorithm.
 func (h *HungarianAlgorithm) greedyMatch() {
 	for w := 0; w < h.dim; w++ {
 		for j := 0; j < h.dim; j++ {
@@ -253,12 +255,11 @@ func (h *HungarianAlgorithm) greedyMatch() {
 	}
 }
 
-// Initialize the next phase of the algorithm by clearing the committed
-// workers and jobs sets and by initializing the slack arrays to the values
-// corresponding to the specified root worker.
+// Initialize the next phase of the algorithm by clearing the
+// committed workers and jobs sets and by initializing the slack
+// arrays to the values corresponding to the specified root worker.
 //
-// @param w
-//          the worker at which to root the next phase.
+// param w is the worker at which to root the next phase.
 func (h *HungarianAlgorithm) initializePhase(w int) {
 	for i := range h.committedWorkers {
 		h.committedWorkers[i] = false
@@ -331,6 +332,12 @@ func (h *HungarianAlgorithm) updateLabeling(slack float64) {
 			h.minSlackValueByJob[j] -= slack
 		}
 	}
+}
+
+func init() {
+	ErrorIrregularCostMatrix = errors.New("Irregular cost matrix")
+	ErrorInfiniteCost = errors.New("Infinite cost")
+	ErrorNaNCost = errors.New("NaN cost")
 }
 
 /* Example
