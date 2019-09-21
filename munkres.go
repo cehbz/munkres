@@ -19,21 +19,15 @@
  * SOFTWARE.
  */
 
-package munkres
-
-import (
-	"errors"
-	"math"
-)
-
 /*
-An implementation of the Hungarian algorithm for solving the assignment
-problem. An instance of the assignment problem consists of a number of
-workers along with a number of jobs and a cost matrix which gives the cost of
-assigning the i'th worker to the j'th job at position (i, j). The goal is to
-find an assignment of workers to jobs so that no job is assigned more than
-one worker and so that no worker is assigned to more than one job in such a
-manner so as to minimize the total cost of completing the jobs.
+Package "munkres" is an implementation of Munkres's Hungarian
+algorithm for solving the assignment problem. An instance of the
+assignment problem consists of a number of workers along with a number
+of jobs and a cost matrix which gives the cost of assigning the i'th
+worker to the j'th job at position (i, j). The goal is to find an
+assignment of workers to jobs so that no job is assigned more than one
+worker and so that no worker is assigned to more than one job in such
+a manner so as to minimize the total cost of completing the jobs.
 
 An assignment for a cost matrix that has more workers than jobs will
 necessarily include unassigned workers, indicated by an assignment value of
@@ -49,8 +43,20 @@ maximum among the number of workers and the number of jobs.
 ported from the Java version by Kevin L. Stern
 https://github.com/KevinStern/software-and-algorithms/
 */
+package munkres
 
-var ErrorIrregularCostMatrix, ErrorInfiniteCost, ErrorNaNCost error
+import (
+	"errors"
+	"math"
+)
+
+var
+// The cost matrix must be rectangular
+ErrorIrregularCostMatrix,
+	// The cost matrix must not contain any infinities
+	ErrorInfiniteCost,
+	// The cost matrix must not contain any NaNs
+	ErrorNaNCost error
 
 type HungarianAlgorithm struct {
 	costMatrix                         [][]float64
