@@ -22,7 +22,7 @@
 package munkres
 
 import (
-	"fmt"
+	"errors"
 	"math"
 )
 
@@ -49,6 +49,10 @@ import (
  * ported from the Java version by Kevin L. Stern
  * https://github.com/KevinStern/software-and-algorithms/
 */
+var ErrorIrregularCostMatrix = errors.New("Irregular cost matrix")
+var ErrorInfiniteCost = errors.New("Infinite cost")
+var ErrorNaNCost = errors.New("NaN cost")
+
 type HungarianAlgorithm struct {
 	costMatrix                         [][]float64
 	rows, cols, dim                    int
@@ -69,6 +73,9 @@ type HungarianAlgorithm struct {
 //          addition, all entries must be non-infinite numbers.
 func NewHungarianAlgorithm(costMatrix [][]float64) (HungarianAlgorithm, error) {
 	dim := len(costMatrix)
+	if dim == 0 {
+		return HungarianAlgorithm{}, nil
+	}
 	if len(costMatrix[0]) > dim {
 		dim = len(costMatrix[0])
 	}
@@ -88,18 +95,18 @@ func NewHungarianAlgorithm(costMatrix [][]float64) (HungarianAlgorithm, error) {
 	}
 	for w := 0; w < dim; w++ {
 		this.costMatrix[w] = make([]float64, dim)
-		if w > len(costMatrix) {
+		if w >= len(costMatrix) {
 			continue
 		}
 		if len(costMatrix[w]) != this.cols {
-			return this, fmt.Errorf("Irregular cost matrix")
+			return this, ErrorIrregularCostMatrix
 		}
 		for j := range costMatrix[w] {
 			if math.IsInf(costMatrix[w][j], 0) {
-				return this, fmt.Errorf("Infinite cost")
+				return this, ErrorInfiniteCost
 			}
 			if math.IsNaN(costMatrix[w][j]) {
-				return this, fmt.Errorf("NaN cost")
+				return this, ErrorNaNCost
 			}
 		}
 		copy(this.costMatrix[w], costMatrix[w])
