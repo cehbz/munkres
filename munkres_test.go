@@ -11,14 +11,17 @@ import (
 
 func computeCost(matrix [][]float64, match []int) (float64, error) {
 	result := 0.0
-	visited := map[int]struct{}{}
+	visited := map[int]int{}
 	for i := 0; i < len(matrix); i++ {
 		if match[i] == -1 {
 			continue
 		}
 		if _, ok := visited[match[i]]; ok {
-			return 0.0, fmt.Errorf("duplicated job")
+			return 0.0, fmt.Errorf(
+				"workers %d and %d have the same job",
+				match[i], i)
 		}
+		visited[match[i]] = i
 		result += matrix[i][match[i]]
 	}
 	return result, nil
